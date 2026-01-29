@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { sendMessage } from '../controllers/message.controller';
+import { sendMessage, downloadMedia } from '../controllers/message.controller';
 
 const router = Router();
 
@@ -95,5 +95,59 @@ const router = Router();
  *         description: Server error
  */
 router.post('/send', sendMessage);
+
+/**
+ * @swagger
+ * /api/message/download-media:
+ *   post:
+ *     summary: Download media from a received WhatsApp message
+ *     tags: [Message]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - sessionId
+ *               - message
+ *             properties:
+ *               sessionId:
+ *                 type: string
+ *                 description: Session ID
+ *               message:
+ *                 type: object
+ *                 description: The full message object from the webhook
+ *               returnBase64:
+ *                 type: boolean
+ *                 description: If true, returns base64 encoded media in JSON. If false, returns binary stream.
+ *                 default: false
+ *     responses:
+ *       200:
+ *         description: Media downloaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         mimetype:
+ *                           type: string
+ *                         base64:
+ *                           type: string
+ *                         size:
+ *                           type: integer
+ *       400:
+ *         description: Bad request
+ *       404:
+ *         description: Session not found
+ *       500:
+ *         description: Server error
+ */
+router.post('/download-media', downloadMedia);
 
 export default router;

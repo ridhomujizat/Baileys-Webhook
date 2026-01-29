@@ -162,6 +162,49 @@ export class WhatsAppService extends EventEmitter {
         }
     }
 
+    /**
+     * Download media from a WhatsApp message
+     * @param message The complete message object from the webhook
+     * @returns Buffer containing the decrypted media
+     */
+    async downloadMedia(message: proto.IMessage): Promise<{ buffer: Buffer; mimetype: string }> {
+        if (!this.sock) throw new Error('WhatsApp not initialized');
+
+        // Create a minimal message info structure for downloadMediaMessage
+        const msgInfo: proto.IWebMessageInfo = {
+            key: { remoteJid: '', fromMe: false, id: '' },
+            message: message,
+        };
+
+        const buffer = await downloadMediaMessage(
+            msgInfo,
+            'buffer',
+            {},
+            {
+                logger: logger as any,
+                reuploadRequest: this.sock.updateMediaMessage,
+            }
+        );
+
+        // Get mimetype from the message
+        const messageType = getContentType(message);
+        let mimetype = 'application/octet-stream';
+
+        if (messageType === 'imageMessage' && message.imageMessage) {
+            mimetype = message.imageMessage.mimetype || 'image/jpeg';
+        } else if (messageType === 'videoMessage' && message.videoMessage) {
+            mimetype = message.videoMessage.mimetype || 'video/mp4';
+        } else if (messageType === 'audioMessage' && message.audioMessage) {
+            mimetype = message.audioMessage.mimetype || 'audio/ogg';
+        } else if (messageType === 'documentMessage' && message.documentMessage) {
+            mimetype = message.documentMessage.mimetype || 'application/octet-stream';
+        } else if (messageType === 'stickerMessage' && message.stickerMessage) {
+            mimetype = message.stickerMessage.mimetype || 'image/webp';
+        }
+
+        return { buffer: buffer as Buffer, mimetype };
+    }
+
     async sendTextMessage(payload: TextMessage): Promise<any> {
         if (!this.sock) throw new Error('WhatsApp not initialized');
 
