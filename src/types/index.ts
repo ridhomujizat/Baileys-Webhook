@@ -3,6 +3,7 @@ export interface SessionData {
     status: 'connecting' | 'connected' | 'disconnected';
     qr?: string;
     phone?: string;
+    isActive?: boolean;
 }
 
 export interface TextMessage {

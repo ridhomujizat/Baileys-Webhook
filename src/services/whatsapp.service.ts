@@ -148,6 +148,15 @@ export class WhatsAppService extends EventEmitter {
 
             logger.info({ incomingMessage }, 'Received message');
 
+            // Import sessionService dynamically to avoid circular dependency
+            const { sessionService } = await import('./session.service');
+
+            // Check if session is active before sending to webhook
+            if (!sessionService.isSessionActive(this.sessionId)) {
+                logger.info({ sessionId: this.sessionId }, 'Session is inactive, skipping webhook');
+                return;
+            }
+
             // Send to webhook if configured
             if (config.webhookUrl) {
                 try {

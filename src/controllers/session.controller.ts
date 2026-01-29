@@ -222,3 +222,47 @@ export const getAllSessions = async (req: Request, res: Response) => {
         res.status(500).json(response);
     }
 };
+
+export const toggleSessionActive = async (req: Request, res: Response) => {
+    try {
+        const { sessionId } = req.params;
+        const { active } = req.body;
+
+        if (typeof active !== 'boolean') {
+            const response: ApiResponse = {
+                success: false,
+                error: 'active must be a boolean',
+            };
+            return res.status(400).json(response);
+        }
+
+        const session = sessionService.getSession(sessionId);
+
+        if (!session) {
+            const response: ApiResponse = {
+                success: false,
+                error: 'Session not found',
+            };
+            return res.status(404).json(response);
+        }
+
+        sessionService.setSessionActive(sessionId, active);
+
+        const response: ApiResponse = {
+            success: true,
+            message: `Session ${active ? 'activated' : 'deactivated'} successfully`,
+            data: {
+                sessionId,
+                isActive: active,
+            },
+        };
+
+        res.json(response);
+    } catch (error: any) {
+        const response: ApiResponse = {
+            success: false,
+            error: error.message,
+        };
+        res.status(500).json(response);
+    }
+};

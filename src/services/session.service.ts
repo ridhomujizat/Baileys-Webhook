@@ -7,6 +7,7 @@ import path from 'path';
 
 class SessionService {
     private sessions: Map<string, WhatsAppService> = new Map();
+    private activeStatus: Map<string, boolean> = new Map();
 
     async createSession(sessionId: string, phoneNumber?: string): Promise<WhatsAppService> {
         if (this.sessions.has(sessionId)) {
@@ -18,6 +19,7 @@ class SessionService {
         await whatsappService.initialize(phoneNumber);
 
         this.sessions.set(sessionId, whatsappService);
+        this.activeStatus.set(sessionId, true); // Sessions are active by default
         logger.info({ sessionId, usePairingCode: !!phoneNumber }, 'Session created');
 
         return whatsappService;
@@ -33,6 +35,7 @@ class SessionService {
         if (session) {
             await session.destroy();
             this.sessions.delete(sessionId);
+            this.activeStatus.delete(sessionId);
             logger.info({ sessionId }, 'Session deleted');
         }
     }
@@ -46,6 +49,7 @@ class SessionService {
                 status: service.getStatus() as any,
                 qr: service.getQRCode() || undefined,
                 phone: service.getPhone() || undefined,
+                isActive: this.activeStatus.get(sessionId) ?? true,
             });
         });
 
@@ -54,6 +58,19 @@ class SessionService {
 
     hasSession(sessionId: string): boolean {
         return this.sessions.has(sessionId);
+    }
+
+    setSessionActive(sessionId: string, active: boolean): boolean {
+        if (!this.sessions.has(sessionId)) {
+            return false;
+        }
+        this.activeStatus.set(sessionId, active);
+        logger.info({ sessionId, active }, 'Session active status changed');
+        return true;
+    }
+
+    isSessionActive(sessionId: string): boolean {
+        return this.activeStatus.get(sessionId) ?? true;
     }
 
     /**

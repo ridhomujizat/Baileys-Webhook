@@ -40,6 +40,14 @@ app.get('/health', (req: Request, res: Response) => {
 // Apply auth middleware to all API routes
 app.use('/api', authMiddleware);
 
+// Token validation endpoint
+app.get('/api/auth/check', (req: Request, res: Response) => {
+    res.json({
+        success: true,
+        message: 'Token is valid'
+    });
+});
+
 // Routes (protected by auth middleware)
 app.use('/api/session', sessionRoutes);
 app.use('/api/message', messageRoutes);

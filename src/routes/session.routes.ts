@@ -6,6 +6,7 @@ import {
     getStatus,
     logout,
     getAllSessions,
+    toggleSessionActive,
 } from '../controllers/session.controller';
 
 const router = Router();
@@ -202,5 +203,55 @@ router.post('/logout/:sessionId', logout);
  *                         $ref: '#/components/schemas/SessionData'
  */
 router.get('/all', getAllSessions);
+
+/**
+ * @swagger
+ * /api/session/{sessionId}/active:
+ *   patch:
+ *     summary: Toggle session active/inactive status
+ *     tags: [Session]
+ *     parameters:
+ *       - in: path
+ *         name: sessionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Session ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - active
+ *             properties:
+ *               active:
+ *                 type: boolean
+ *                 description: Whether the session should be active
+ *                 example: true
+ *     responses:
+ *       200:
+ *         description: Session status toggled successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         sessionId:
+ *                           type: string
+ *                         isActive:
+ *                           type: boolean
+ *       400:
+ *         description: Invalid request body
+ *       404:
+ *         description: Session not found
+ */
+router.patch('/:sessionId/active', toggleSessionActive);
 
 export default router;
