@@ -41,4 +41,10 @@ export const sessionApi = {
         const response = await api.patch<ApiResponse<{ sessionId: string; isActive: boolean }>>(`/session/${sessionId}/active`, { active });
         return response.data;
     },
+
+    updateWebhookUrl: async (sessionId: string, webhookUrl: string) => {
+        const response = await api.patch<ApiResponse<{ sessionId: string; webhookUrl: string | null }>>(`/session/${sessionId}/webhook`, { webhookUrl });
+        return response.data;
+    },
 };
+

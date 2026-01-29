@@ -266,3 +266,57 @@ export const toggleSessionActive = async (req: Request, res: Response) => {
         res.status(500).json(response);
     }
 };
+
+export const updateWebhookUrl = async (req: Request, res: Response) => {
+    try {
+        const { sessionId } = req.params;
+        const { webhookUrl } = req.body;
+
+        if (typeof webhookUrl !== 'string') {
+            const response: ApiResponse = {
+                success: false,
+                error: 'webhookUrl must be a string',
+            };
+            return res.status(400).json(response);
+        }
+
+        // Basic URL validation (if not empty)
+        if (webhookUrl && !webhookUrl.startsWith('http://') && !webhookUrl.startsWith('https://')) {
+            const response: ApiResponse = {
+                success: false,
+                error: 'webhookUrl must be a valid HTTP/HTTPS URL',
+            };
+            return res.status(400).json(response);
+        }
+
+        const session = sessionService.getSession(sessionId);
+
+        if (!session) {
+            const response: ApiResponse = {
+                success: false,
+                error: 'Session not found',
+            };
+            return res.status(404).json(response);
+        }
+
+        sessionService.setWebhookUrl(sessionId, webhookUrl);
+
+        const response: ApiResponse = {
+            success: true,
+            message: webhookUrl ? 'Webhook URL updated successfully' : 'Webhook URL removed',
+            data: {
+                sessionId,
+                webhookUrl: webhookUrl || null,
+            },
+        };
+
+        res.json(response);
+    } catch (error: any) {
+        const response: ApiResponse = {
+            success: false,
+            error: error.message,
+        };
+        res.status(500).json(response);
+    }
+};
+

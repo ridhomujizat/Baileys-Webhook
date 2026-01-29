@@ -4,6 +4,7 @@ export interface SessionData {
     qr?: string;
     phone?: string;
     isActive?: boolean;
+    webhookUrl?: string;
 }
 
 export interface TextMessage {

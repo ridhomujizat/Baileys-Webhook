@@ -12,6 +12,7 @@ export interface SessionData {
     phone?: string;
     isActive?: boolean;
     pairingCode?: string;
+    webhookUrl?: string;
 }
 
 export interface MessagePayload {

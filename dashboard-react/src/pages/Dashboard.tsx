@@ -130,7 +130,9 @@ const SessionCard: React.FC<{
     const queryClient = useQueryClient();
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [pairingModalOpen, setPairingModalOpen] = useState(false);
+    const [webhookModalOpen, setWebhookModalOpen] = useState(false);
     const [pairingCode, setPairingCode] = useState<string | null>(null);
+    const [webhookUrl, setWebhookUrl] = useState(session.webhookUrl || '');
 
     const isConnected = session.status === 'connected';
     const isActive = session.isActive !== false; // Default to true if undefined
@@ -163,10 +165,30 @@ const SessionCard: React.FC<{
         }
     });
 
+    // Update Webhook URL Mutation
+    const webhookMutation = useMutation({
+        mutationFn: ({ sessionId, webhookUrl }: { sessionId: string; webhookUrl: string }) =>
+            sessionApi.updateWebhookUrl(sessionId, webhookUrl),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['sessions'] });
+            setWebhookModalOpen(false);
+        }
+    });
+
     const handleGetPairingCode = () => {
         setPairingModalOpen(true);
         pairingCodeMutation.mutate(session.sessionId);
     };
+
+    const handleUpdateWebhook = (e: React.FormEvent) => {
+        e.preventDefault();
+        webhookMutation.mutate({ sessionId: session.sessionId, webhookUrl });
+    };
+
+    // Sync local state with session data
+    React.useEffect(() => {
+        setWebhookUrl(session.webhookUrl || '');
+    }, [session.webhookUrl]);
 
     return (
         <>
@@ -202,6 +224,20 @@ const SessionCard: React.FC<{
                             <div className="bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg border border-gray-100 dark:border-transparent">
                                 <p className="text-xs text-gray-500 uppercase font-semibold">Phone Number</p>
                                 <p className="text-gray-900 dark:text-gray-200 font-mono">{session.phone || 'Unknown'}</p>
+                            </div>
+                            <div className="bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg border border-gray-100 dark:border-transparent">
+                                <div className="flex justify-between items-center">
+                                    <p className="text-xs text-gray-500 uppercase font-semibold">Webhook URL</p>
+                                    <button
+                                        onClick={() => setWebhookModalOpen(true)}
+                                        className="text-xs text-indigo-500 hover:text-indigo-400 cursor-pointer"
+                                    >
+                                        Edit
+                                    </button>
+                                </div>
+                                <p className="text-gray-900 dark:text-gray-200 text-sm truncate">
+                                    {session.webhookUrl || <span className="text-gray-400 italic">Not set</span>}
+                                </p>
                             </div>
                         </div>
                     ) : (
@@ -315,6 +351,45 @@ const SessionCard: React.FC<{
                     </div>
                 )}
             </Modal>
+
+            {/* Webhook URL Modal */}
+            <Modal
+                isOpen={webhookModalOpen}
+                onClose={() => setWebhookModalOpen(false)}
+                title="Edit Webhook URL"
+                hideFooter
+            >
+                <form onSubmit={handleUpdateWebhook}>
+                    <p className="text-sm text-gray-500 mb-4">
+                        Incoming messages will be sent to this URL. Leave empty to disable.
+                    </p>
+                    <input
+                        type="url"
+                        className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white mb-4 focus:ring-2 focus:ring-indigo-500 outline-none placeholder:text-gray-500"
+                        placeholder="https://example.com/webhook"
+                        value={webhookUrl}
+                        onChange={(e) => setWebhookUrl(e.target.value)}
+                    />
+                    <div className="flex justify-end gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setWebhookModalOpen(false)}
+                            className="px-4 py-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white cursor-pointer"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={webhookMutation.isPending}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                        >
+                            {webhookMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                            Save
+                        </button>
+                    </div>
+                </form>
+            </Modal>
         </>
     );
 };
+

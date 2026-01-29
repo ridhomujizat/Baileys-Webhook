@@ -157,13 +157,16 @@ export class WhatsAppService extends EventEmitter {
                 return;
             }
 
+            // Get webhook URL for this session (falls back to global config)
+            const webhookUrl = sessionService.getWebhookUrl(this.sessionId);
+
             // Send to webhook if configured
-            if (config.webhookUrl) {
+            if (webhookUrl) {
                 try {
-                    await axios.post(config.webhookUrl, incomingMessage);
-                    logger.info({ webhookUrl: config.webhookUrl }, 'Message sent to webhook');
+                    await axios.post(webhookUrl, incomingMessage);
+                    logger.info({ webhookUrl, sessionId: this.sessionId }, 'Message sent to webhook');
                 } catch (error) {
-                    logger.error({ error }, 'Failed to send message to webhook');
+                    logger.error({ error, webhookUrl }, 'Failed to send message to webhook');
                 }
             }
         } catch (error) {

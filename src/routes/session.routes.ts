@@ -7,6 +7,7 @@ import {
     logout,
     getAllSessions,
     toggleSessionActive,
+    updateWebhookUrl,
 } from '../controllers/session.controller';
 
 const router = Router();
@@ -254,4 +255,56 @@ router.get('/all', getAllSessions);
  */
 router.patch('/:sessionId/active', toggleSessionActive);
 
+/**
+ * @swagger
+ * /api/session/{sessionId}/webhook:
+ *   patch:
+ *     summary: Update webhook URL for a session
+ *     tags: [Session]
+ *     parameters:
+ *       - in: path
+ *         name: sessionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Session ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - webhookUrl
+ *             properties:
+ *               webhookUrl:
+ *                 type: string
+ *                 description: Webhook URL to send incoming messages to. Use empty string to remove.
+ *                 example: https://example.com/webhook
+ *     responses:
+ *       200:
+ *         description: Webhook URL updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         sessionId:
+ *                           type: string
+ *                         webhookUrl:
+ *                           type: string
+ *                           nullable: true
+ *       400:
+ *         description: Invalid request body
+ *       404:
+ *         description: Session not found
+ */
+router.patch('/:sessionId/webhook', updateWebhookUrl);
+
 export default router;
+
