@@ -46,13 +46,13 @@ Edit file `.env`:
 
 ```env
 PORT=3000
-WEBHOOK_URL=http://localhost:3001/webhook
 SESSION_PATH=./sessions
+TOKEN=your-secret-token
 ```
 
 - `PORT`: Port untuk HTTP server
-- `WEBHOOK_URL`: URL untuk menerima incoming messages (optional)
 - `SESSION_PATH`: Path untuk menyimpan session data
+- `TOKEN`: API authentication token
 
 ## Usage
 
@@ -335,7 +335,16 @@ Endpoint universal untuk mengirim semua jenis pesan.
 
 ### Webhook (Incoming Messages)
 
-Jika `WEBHOOK_URL` dikonfigurasi, semua incoming messages akan dikirim ke URL tersebut via POST request.
+Setiap session dapat dikonfigurasi dengan webhook URL sendiri melalui Dashboard atau API.
+
+**Set Webhook URL via API:**
+
+```bash
+curl -X PATCH http://localhost:3000/api/session/my-session/webhook \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{"webhookUrl": "https://your-server.com/webhook"}'
+```
 
 **Webhook Payload:**
 
@@ -479,7 +488,7 @@ Baileys-Webhook/
 - Pastikan WhatsApp di HP sudah multi-device
 
 ### Webhook tidak menerima messages
-- Pastikan `WEBHOOK_URL` sudah benar di `.env`
+- Pastikan webhook URL sudah diset per-session (via Dashboard atau API)
 - Pastikan webhook endpoint bisa diakses dari server
 - Cek logs untuk error
 

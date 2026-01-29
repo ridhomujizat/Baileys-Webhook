@@ -28,7 +28,6 @@ echo "Generated TOKEN: $TOKEN"
 # 4. Edit .env file
 nano .env
 # Paste TOKEN yang di-generate
-# Sesuaikan WEBHOOK_URL jika diperlukan
 
 # 5. Build & Run
 docker compose up -d --build
@@ -45,11 +44,12 @@ curl http://localhost:3000/health
 |----------|----------|---------|-------------|
 | `TOKEN` | ✅ Yes | - | API authentication token (min 32 chars) |
 | `PORT` | No | 3000 | Server port |
-| `WEBHOOK_URL` | No | - | URL untuk menerima incoming messages |
 | `LOG_LEVEL` | No | info | Log level: debug, info, warn, error |
 | `ALLOWED_ORIGINS` | No | - | Comma-separated allowed CORS origins |
 | `RATE_LIMIT_MAX` | No | 100 | Max requests per window |
 | `RATE_LIMIT_WINDOW_MS` | No | 900000 | Rate limit window (15 min) |
+
+> 💡 **Note:** Webhook URL sekarang dikonfigurasi per-session melalui Dashboard atau API.
 
 ### Contoh .env untuk Production
 
@@ -60,9 +60,6 @@ LOG_LEVEL=info
 
 # WAJIB: Generate dengan: openssl rand -hex 32
 TOKEN=your-secure-64-character-token-here
-
-# Optional: Webhook untuk incoming messages
-WEBHOOK_URL=https://your-backend.com/webhook
 
 # Optional: CORS (jika diakses dari domain lain)
 ALLOWED_ORIGINS=https://yourdomain.com
