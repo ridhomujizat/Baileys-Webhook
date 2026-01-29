@@ -69,7 +69,41 @@ npm run build
 npm start
 ```
 
+### Docker Mode
+
+**Using Docker Compose (Recommended):**
+
+```bash
+# Start the service
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop the service
+docker-compose down
+```
+
+**Using Docker directly:**
+
+```bash
+# Build image
+docker build -t baileys-webhook .
+
+# Run container
+docker run -d \
+  -p 3000:3000 \
+  -v $(pwd)/sessions:/app/sessions \
+  --env-file .env \
+  --name baileys-webhook \
+  baileys-webhook
+```
+
 ## API Documentation
+
+**Authentication Required:**
+Add `Authorization` header with your token (from `.env`):
+`Authorization: Bearer <YOUR_TOKEN>`
 
 Base URL: `http://localhost:3000/api`
 

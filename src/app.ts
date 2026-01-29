@@ -7,6 +7,7 @@ import { swaggerSpec } from './config/swagger';
 import sessionRoutes from './routes/session.routes';
 import messageRoutes from './routes/message.routes';
 import { sessionService } from './services/session.service';
+import { authMiddleware } from './middleware/auth.middleware';
 
 const app = express();
 
@@ -15,7 +16,7 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Swagger Documentation
+// Swagger Documentation (public)
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
     customCss: '.swagger-ui .topbar { display: none }',
     customSiteTitle: 'Baileys API Documentation',
@@ -31,12 +32,15 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     next();
 });
 
-// Health check
+// Health check (public)
 app.get('/health', (req: Request, res: Response) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Routes
+// Apply auth middleware to all API routes
+app.use('/api', authMiddleware);
+
+// Routes (protected by auth middleware)
 app.use('/api/session', sessionRoutes);
 app.use('/api/message', messageRoutes);
 

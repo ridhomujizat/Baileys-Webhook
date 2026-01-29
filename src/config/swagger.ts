@@ -31,7 +31,20 @@ const options: swaggerJsdoc.Options = {
                 description: 'Health check endpoint',
             },
         ],
+        security: [
+            {
+                BearerAuth: [],
+            },
+        ],
         components: {
+            securitySchemes: {
+                BearerAuth: {
+                    type: 'http',
+                    scheme: 'bearer',
+                    bearerFormat: 'Token',
+                    description: 'Enter your API token (from TOKEN env variable)',
+                },
+            },
             schemas: {
                 ApiResponse: {
                     type: 'object',
