@@ -29,7 +29,7 @@ export const AuthPage: React.FC = () => {
             setToken(inputToken);
             navigate('/');
         } catch (err) {
-            setError('Invalid API Token. Please check your .env file.');
+            setError('Invalid API Token.');
             // Reset axios header
             delete api.defaults.headers.common['Authorization'];
         } finally {
@@ -64,7 +64,7 @@ export const AuthPage: React.FC = () => {
                             value={inputToken}
                             onChange={(e) => setInputToken(e.target.value)}
                             className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                            placeholder="Enter token from .env"
+                            placeholder="Enter token"
                             required
                         />
                     </div>

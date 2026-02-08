@@ -58,7 +58,8 @@ RUN apk add --no-cache python3 make g++ && \
 COPY --from=backend-builder /app/dist ./dist
 
 # Copy built frontend from frontend-builder
-COPY --from=frontend-builder /app/dashboard-react/../public ./public
+# vite.config.ts builds to '../public' from dashboard-react, so output is at /app/public
+COPY --from=frontend-builder /app/public ./public
 
 # Create sessions directory with proper permissions
 RUN mkdir -p sessions && chown -R node:node /app
