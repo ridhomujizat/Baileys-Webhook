@@ -7,7 +7,11 @@ const router = Router();
  * @swagger
  * /api/message/send:
  *   post:
- *     summary: Send a message (supports all message types)
+ *     summary: Send a message (supports all message types, with optional reply)
+ *     description: |
+ *       Send various message types including text, image, video, audio, document, location, and contact.
+ *       All message types support replying to a previous message using the `quotedMessageKey` field.
+ *       The `quotedMessageKey` should contain the `remoteJid`, `id`, and optionally `participant` (for group messages) from the received message's key.
  *     tags: [Message]
  *     requestBody:
  *       required: true
@@ -30,6 +34,23 @@ const router = Router();
  *                 type: text
  *                 to: "628123456789"
  *                 text: Hello from Baileys!
+ *             reply:
+ *               summary: Reply to a message
+ *               value:
+ *                 sessionId: my-session
+ *                 type: text
+ *                 to: "628123456789"
+ *                 text: This is a reply!
+ *                 replyTo: "ABCDEF123456"
+ *             groupReply:
+ *               summary: Reply to a group message
+ *               value:
+ *                 sessionId: my-session
+ *                 type: text
+ *                 to: "120363xxx@g.us"
+ *                 text: Reply in group!
+ *                 replyTo: "3EB04BE7DB132AD7D643DE"
+ *                 participant: "118111768465647@lid"
  *             image:
  *               summary: Image message
  *               value:

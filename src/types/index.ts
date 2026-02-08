@@ -11,6 +11,8 @@ export interface TextMessage {
     type: 'text';
     to: string;
     text: string;
+    replyTo?: string; // Message ID to reply to
+    participant?: string; // For group replies
 }
 
 export interface ImageMessage {
@@ -18,6 +20,8 @@ export interface ImageMessage {
     to: string;
     image: string; // URL or base64
     caption?: string;
+    replyTo?: string;
+    participant?: string;
 }
 
 export interface VideoMessage {
@@ -25,6 +29,8 @@ export interface VideoMessage {
     to: string;
     video: string; // URL or base64
     caption?: string;
+    replyTo?: string;
+    participant?: string;
 }
 
 export interface AudioMessage {
@@ -32,6 +38,8 @@ export interface AudioMessage {
     to: string;
     audio: string; // URL or base64
     ptt?: boolean; // Push to talk (voice note)
+    replyTo?: string;
+    participant?: string;
 }
 
 export interface DocumentMessage {
@@ -40,6 +48,8 @@ export interface DocumentMessage {
     document: string; // URL or base64
     fileName: string;
     mimetype?: string;
+    replyTo?: string;
+    participant?: string;
 }
 
 export interface LocationMessage {
@@ -47,6 +57,8 @@ export interface LocationMessage {
     to: string;
     latitude: number;
     longitude: number;
+    replyTo?: string;
+    participant?: string;
 }
 
 export interface ContactMessage {
@@ -56,6 +68,8 @@ export interface ContactMessage {
         displayName: string;
         vcard: string;
     };
+    replyTo?: string;
+    participant?: string;
 }
 
 export type MessagePayload =
@@ -80,4 +94,10 @@ export interface IncomingMessage {
     messageType: string;
     message: any;
     timestamp: number;
+    key: {
+        remoteJid: string;
+        id: string;
+        fromMe: boolean;
+        participant?: string; // For group messages
+    };
 }

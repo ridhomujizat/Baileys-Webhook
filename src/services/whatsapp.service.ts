@@ -144,6 +144,12 @@ export class WhatsAppService extends EventEmitter {
                 messageType: messageType || 'unknown',
                 message: msg.message,
                 timestamp: msg.messageTimestamp as number,
+                key: {
+                    remoteJid: msg.key.remoteJid!,
+                    id: msg.key.id!,
+                    fromMe: msg.key.fromMe || false,
+                    participant: msg.key.participant || undefined,
+                },
             };
 
             logger.info({ incomingMessage }, 'Received message');
@@ -221,9 +227,18 @@ export class WhatsAppService extends EventEmitter {
         if (!this.sock) throw new Error('WhatsApp not initialized');
 
         const jid = this.formatJid(payload.to);
-        const result = await this.sock.sendMessage(jid, { text: payload.text });
+        const result = await this.sock.sendMessage(jid, { text: payload.text }, {
+            quoted: payload.replyTo ? {
+                key: {
+                    remoteJid: jid,
+                    id: payload.replyTo,
+                    participant: payload.participant,
+                },
+                message: {},
+            } : undefined,
+        });
 
-        logger.info({ to: jid, type: 'text' }, 'Message sent');
+        logger.info({ to: jid, type: 'text', isReply: !!payload.replyTo }, 'Message sent');
         return result;
     }
 
@@ -236,9 +251,18 @@ export class WhatsAppService extends EventEmitter {
         const result = await this.sock.sendMessage(jid, {
             image: imageBuffer,
             caption: payload.caption,
+        }, {
+            quoted: payload.replyTo ? {
+                key: {
+                    remoteJid: jid,
+                    id: payload.replyTo,
+                    participant: payload.participant,
+                },
+                message: {},
+            } : undefined,
         });
 
-        logger.info({ to: jid, type: 'image' }, 'Message sent');
+        logger.info({ to: jid, type: 'image', isReply: !!payload.replyTo }, 'Message sent');
         return result;
     }
 
@@ -251,9 +275,18 @@ export class WhatsAppService extends EventEmitter {
         const result = await this.sock.sendMessage(jid, {
             video: videoBuffer,
             caption: payload.caption,
+        }, {
+            quoted: payload.replyTo ? {
+                key: {
+                    remoteJid: jid,
+                    id: payload.replyTo,
+                    participant: payload.participant,
+                },
+                message: {},
+            } : undefined,
         });
 
-        logger.info({ to: jid, type: 'video' }, 'Message sent');
+        logger.info({ to: jid, type: 'video', isReply: !!payload.replyTo }, 'Message sent');
         return result;
     }
 
@@ -266,9 +299,18 @@ export class WhatsAppService extends EventEmitter {
         const result = await this.sock.sendMessage(jid, {
             audio: audioBuffer,
             ptt: payload.ptt ?? false,
+        }, {
+            quoted: payload.replyTo ? {
+                key: {
+                    remoteJid: jid,
+                    id: payload.replyTo,
+                    participant: payload.participant,
+                },
+                message: {},
+            } : undefined,
         });
 
-        logger.info({ to: jid, type: 'audio' }, 'Message sent');
+        logger.info({ to: jid, type: 'audio', isReply: !!payload.replyTo }, 'Message sent');
         return result;
     }
 
@@ -282,9 +324,18 @@ export class WhatsAppService extends EventEmitter {
             document: documentBuffer,
             fileName: payload.fileName,
             mimetype: payload.mimetype || 'application/octet-stream',
+        }, {
+            quoted: payload.replyTo ? {
+                key: {
+                    remoteJid: jid,
+                    id: payload.replyTo,
+                    participant: payload.participant,
+                },
+                message: {},
+            } : undefined,
         });
 
-        logger.info({ to: jid, type: 'document' }, 'Message sent');
+        logger.info({ to: jid, type: 'document', isReply: !!payload.replyTo }, 'Message sent');
         return result;
     }
 
@@ -298,9 +349,18 @@ export class WhatsAppService extends EventEmitter {
                 degreesLatitude: payload.latitude,
                 degreesLongitude: payload.longitude,
             },
+        }, {
+            quoted: payload.replyTo ? {
+                key: {
+                    remoteJid: jid,
+                    id: payload.replyTo,
+                    participant: payload.participant,
+                },
+                message: {},
+            } : undefined,
         });
 
-        logger.info({ to: jid, type: 'location' }, 'Message sent');
+        logger.info({ to: jid, type: 'location', isReply: !!payload.replyTo }, 'Message sent');
         return result;
     }
 
@@ -314,22 +374,32 @@ export class WhatsAppService extends EventEmitter {
                 displayName: payload.contact.displayName,
                 contacts: [{ vcard: payload.contact.vcard }],
             },
+        }, {
+            quoted: payload.replyTo ? {
+                key: {
+                    remoteJid: jid,
+                    id: payload.replyTo,
+                    participant: payload.participant,
+                },
+                message: {},
+            } : undefined,
         });
 
-        logger.info({ to: jid, type: 'contact' }, 'Message sent');
+        logger.info({ to: jid, type: 'contact', isReply: !!payload.replyTo }, 'Message sent');
         return result;
     }
 
     private formatJid(phone: string): string {
+        // If already contains @, it's already formatted (group or user JID)
+        if (phone.includes('@')) {
+            return phone;
+        }
+
         // Remove any non-digit characters
         const cleaned = phone.replace(/\D/g, '');
 
-        // Add @s.whatsapp.net if not already present
-        if (!cleaned.includes('@')) {
-            return `${cleaned}@s.whatsapp.net`;
-        }
-
-        return cleaned;
+        // Add @s.whatsapp.net for phone numbers
+        return `${cleaned}@s.whatsapp.net`;
     }
 
     private async getMediaBuffer(media: string): Promise<Buffer> {

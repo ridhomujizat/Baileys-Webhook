@@ -4,7 +4,7 @@ import { Layout } from '../layout/Layout';
 import { messageApi } from '../api/message';
 import { sessionApi } from '../api/session';
 import { JsonEditor } from '../components/JsonEditor';
-import { Send, Loader2 } from 'lucide-react';
+import { Send, Loader2, Reply } from 'lucide-react';
 
 export const MessageTester: React.FC = () => {
     const [sessionId, setSessionId] = useState('');
@@ -15,6 +15,11 @@ export const MessageTester: React.FC = () => {
     const [caption, setCaption] = useState('');
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<string>('');
+
+    // Reply message state
+    const [isReply, setIsReply] = useState(false);
+    const [replyMessageId, setReplyMessageId] = useState('');
+    const [replyParticipant, setReplyParticipant] = useState('');
 
     // Fetch sessions for dropdown
     const { data: sessionsData } = useQuery({
@@ -47,6 +52,14 @@ export const MessageTester: React.FC = () => {
             if (type === 'video') {
                 payload.video = mediaUrl;
                 payload.caption = caption;
+            }
+
+            // Add replyTo if replying
+            if (isReply && replyMessageId) {
+                payload.replyTo = replyMessageId;
+                if (replyParticipant) {
+                    payload.participant = replyParticipant;
+                }
             }
 
             const response = await messageApi.sendMessage(payload);
@@ -145,13 +158,54 @@ export const MessageTester: React.FC = () => {
                                 </>
                             )}
 
+                            {/* Reply to message section */}
+                            <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={isReply}
+                                        onChange={e => setIsReply(e.target.checked)}
+                                        className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                    />
+                                    <Reply className="w-4 h-4 text-gray-500" />
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-400">Reply to a message</span>
+                                </label>
+
+                                {isReply && (
+                                    <div className="mt-3 space-y-3 pl-6 border-l-2 border-indigo-500">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-400 mb-1">Message ID *</label>
+                                            <input
+                                                className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                                                value={replyMessageId}
+                                                onChange={e => setReplyMessageId(e.target.value)}
+                                                placeholder="3EB04BE7DB132AD7D643DE"
+                                                required={isReply}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-400 mb-1">Participant (for groups)</label>
+                                            <input
+                                                className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                                                value={replyParticipant}
+                                                onChange={e => setReplyParticipant(e.target.value)}
+                                                placeholder="Optional: 118111768465647@lid"
+                                            />
+                                        </div>
+                                        <p className="text-xs text-gray-500 dark:text-gray-500">
+                                            Get these from webhook payload: <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">key.id</code> and <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">key.participant</code>
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+
                             <button
                                 type="submit"
-                                disabled={loading || !sessionId}
+                                disabled={loading || !sessionId || (isReply && !replyMessageId)}
                                 className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
                             >
-                                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                                {loading ? 'Sending...' : 'Send Message'}
+                                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : isReply ? <Reply className="w-4 h-4" /> : <Send className="w-4 h-4" />}
+                                {loading ? 'Sending...' : isReply ? 'Send Reply' : 'Send Message'}
                             </button>
                         </form>
                     </div>
