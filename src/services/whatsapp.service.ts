@@ -1,6 +1,5 @@
 import makeWASocket, {
     DisconnectReason,
-    useMultiFileAuthState,
     WASocket,
     proto,
     downloadMediaMessage,
@@ -10,8 +9,6 @@ import makeWASocket, {
 import { EventEmitter } from 'events';
 import { Boom } from '@hapi/boom';
 import QRCode from 'qrcode';
-import path from 'path';
-import fs from 'fs';
 import axios from 'axios';
 import { logger } from '../utils/logger';
 import { config } from '../config/config';
@@ -25,6 +22,8 @@ import {
     ContactMessage,
     IncomingMessage,
 } from '../types';
+import { useRedisAuthState } from './auth-state.service';
+import RedisService from './redis.service';
 
 export class WhatsAppService extends EventEmitter {
     private sock: WASocket | null = null;
@@ -33,22 +32,15 @@ export class WhatsAppService extends EventEmitter {
     private sessionId: string;
     private phoneNumber: string | null = null;
     private status: 'connecting' | 'qr_ready' | 'pairing_code_ready' | 'connected' | 'disconnected' = 'disconnected';
-    private sessionPath: string;
 
     constructor(sessionId: string) {
         super();
         this.sessionId = sessionId;
-        this.sessionPath = path.join(config.sessionPath, sessionId);
     }
 
     async initialize(phoneNumber?: string): Promise<void> {
         try {
-            // Create session directory if not exists
-            if (!fs.existsSync(this.sessionPath)) {
-                fs.mkdirSync(this.sessionPath, { recursive: true });
-            }
-
-            const { state, saveCreds } = await useMultiFileAuthState(this.sessionPath);
+            const { state, saveCreds } = await useRedisAuthState(this.sessionId);
 
             // Fetch the latest WhatsApp Web version to avoid connection issues
             let version: [number, number, number] | undefined;
@@ -450,10 +442,8 @@ export class WhatsAppService extends EventEmitter {
             this.sock = null;
         }
 
-        // Delete session files
-        if (fs.existsSync(this.sessionPath)) {
-            fs.rmSync(this.sessionPath, { recursive: true, force: true });
-            logger.info({ sessionId: this.sessionId }, 'Session files deleted');
-        }
+        // Delete session data from Redis
+        await RedisService.deleteAllSessionData(this.sessionId);
+        logger.info({ sessionId: this.sessionId }, 'Session data deleted from Redis');
     }
 }

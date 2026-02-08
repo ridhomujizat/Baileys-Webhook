@@ -31,24 +31,7 @@ app.use(additionalSecurityHeaders);
 
 // CORS configuration
 const corsOptions: cors.CorsOptions = {
-    origin: (origin, callback) => {
-        // Allow requests with no origin (mobile apps, curl, etc.)
-        if (!origin) {
-            return callback(null, true);
-        }
-
-        // In production, check against allowed origins
-        if (config.nodeEnv === 'production') {
-            if (config.allowedOrigins.includes(origin)) {
-                callback(null, true);
-            } else {
-                callback(new Error('Not allowed by CORS'));
-            }
-        } else {
-            // In development, allow all origins
-            callback(null, true);
-        }
-    },
+    origin: true, // Allow all origins for now
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
