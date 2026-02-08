@@ -47,14 +47,14 @@ export const Dashboard: React.FC = () => {
 
     return (
         <Layout>
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 sm:mb-8">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Sessions</h1>
-                    <p className="text-gray-600 dark:text-gray-400">Manage your WhatsApp connections</p>
+                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Sessions</h1>
+                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Manage your WhatsApp connections</p>
                 </div>
                 <button
                     onClick={() => setIsAddModalOpen(true)}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors cursor-pointer"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors cursor-pointer w-full sm:w-auto"
                 >
                     <Plus className="w-5 h-5" />
                     Add Session
@@ -66,7 +66,7 @@ export const Dashboard: React.FC = () => {
                     <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
                 </div>
             ) : sessions.length === 0 ? (
-                <div className="text-center py-20 bg-white dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 border-dashed">
+                <div className="text-center py-12 sm:py-20 bg-white dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 border-dashed">
                     <p className="text-gray-600 dark:text-gray-400 mb-4">No sessions found</p>
                     <button
                         onClick={() => setIsAddModalOpen(true)}
@@ -76,7 +76,7 @@ export const Dashboard: React.FC = () => {
                     </button>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                     {sessions.map((session) => (
                         <SessionCard
                             key={session.sessionId}
@@ -193,22 +193,22 @@ const SessionCard: React.FC<{
     return (
         <>
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:border-gray-300 dark:hover:border-gray-600 transition-colors shadow-sm">
-                <div className="p-6">
+                <div className="p-4 sm:p-6">
                     <div className="flex justify-between items-start mb-4">
-                        <div>
-                            <h3 className="font-bold text-gray-900 dark:text-white text-lg">{session.sessionId}</h3>
+                        <div className="min-w-0 flex-1">
+                            <h3 className="font-bold text-gray-900 dark:text-white text-base sm:text-lg truncate">{session.sessionId}</h3>
                             <div className={clsx(
                                 "flex items-center gap-2 text-sm mt-1",
                                 isConnected ? "text-green-500" : "text-yellow-500"
                             )}>
-                                {isConnected ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
-                                <span className="capitalize">{session.status.replace('_', ' ')}</span>
+                                {isConnected ? <Wifi className="w-4 h-4 flex-shrink-0" /> : <WifiOff className="w-4 h-4 flex-shrink-0" />}
+                                <span className="capitalize truncate">{session.status.replace('_', ' ')}</span>
                             </div>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 ml-2">
                             {isConnected && (
                                 <div className={clsx(
-                                    "px-3 py-1 rounded-full text-xs font-medium border",
+                                    "px-2 sm:px-3 py-1 rounded-full text-xs font-medium border whitespace-nowrap",
                                     isActive
                                         ? "bg-green-500/10 text-green-400 border-green-500/20"
                                         : "bg-gray-500/10 text-gray-400 border-gray-500/20"
@@ -223,7 +223,7 @@ const SessionCard: React.FC<{
                         <div className="space-y-2 mb-4">
                             <div className="bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg border border-gray-100 dark:border-transparent">
                                 <p className="text-xs text-gray-500 uppercase font-semibold">Phone Number</p>
-                                <p className="text-gray-900 dark:text-gray-200 font-mono">{session.phone || 'Unknown'}</p>
+                                <p className="text-gray-900 dark:text-gray-200 font-mono text-sm sm:text-base">{session.phone || 'Unknown'}</p>
                             </div>
                             <div className="bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg border border-gray-100 dark:border-transparent">
                                 <div className="flex justify-between items-center">
@@ -241,19 +241,19 @@ const SessionCard: React.FC<{
                             </div>
                         </div>
                     ) : (
-                        <div className="flex flex-col items-center justify-center py-4 bg-gray-50 dark:bg-white/5 rounded-lg mb-4 min-h-[200px]">
+                        <div className="flex flex-col items-center justify-center py-4 bg-gray-50 dark:bg-white/5 rounded-lg mb-4 min-h-[180px] sm:min-h-[200px]">
                             {session.qr ? (
                                 <div className="bg-white p-2 rounded-lg">
-                                    <img src={session.qr} alt="QR Code" className="w-40 h-40" />
+                                    <img src={session.qr} alt="QR Code" className="w-32 h-32 sm:w-40 sm:h-40" />
                                 </div>
                             ) : (
                                 <div className="text-center text-gray-500 flex flex-col items-center gap-2">
-                                    <QrCode className="w-10 h-10 opacity-20" />
+                                    <QrCode className="w-8 sm:w-10 h-8 sm:h-10 opacity-20" />
                                     <span className="text-sm">Waiting for QR...</span>
                                     {session.status === 'connecting' && <Loader2 className="w-4 h-4 animate-spin mt-2" />}
                                 </div>
                             )}
-                            <p className="text-xs text-center text-gray-400 mt-3 max-w-[200px]">
+                            <p className="text-xs text-center text-gray-400 mt-3 max-w-[200px] px-4">
                                 Scan this QR code with WhatsApp to connect
                             </p>
                         </div>
