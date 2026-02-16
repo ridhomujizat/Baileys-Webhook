@@ -24,6 +24,7 @@ import {
 } from '../types';
 import { useRedisAuthState } from './auth-state.service';
 import RedisService from './redis.service';
+import { transformToSimplifiedPayload } from '../utils/webhook-transformer';
 
 export class WhatsAppService extends EventEmitter {
     private sock: WASocket | null = null;
@@ -127,24 +128,23 @@ export class WhatsAppService extends EventEmitter {
 
     private async handleIncomingMessage(msg: proto.IWebMessageInfo): Promise<void> {
         try {
-            const messageType = getContentType(msg.message!);
-            const from = msg.key.remoteJid!;
+            // Transform to simplified payload
+            const simplifiedPayload = transformToSimplifiedPayload(msg, this.sessionId);
 
-            const incomingMessage: IncomingMessage = {
-                sessionId: this.sessionId,
-                from,
-                messageType: messageType || 'unknown',
-                message: msg.message,
-                timestamp: msg.messageTimestamp as number,
-                key: {
-                    remoteJid: msg.key.remoteJid!,
-                    id: msg.key.id!,
-                    fromMe: msg.key.fromMe || false,
-                    participant: msg.key.participant || undefined,
-                },
-            };
+            logger.info({
+                messageType: simplifiedPayload.messageType,
+                from: simplifiedPayload.from,
+                isGroup: simplifiedPayload.isGroup,
+            }, 'Received message');
 
-            logger.info({ incomingMessage }, 'Received message');
+            // Cache the message for media download (24 hour TTL)
+            if (msg.message && msg.key.id) {
+                try {
+                    await RedisService.cacheMessage(this.sessionId, msg.key.id, msg.message, 86400);
+                } catch (error) {
+                    logger.error({ error }, 'Failed to cache message');
+                }
+            }
 
             // Import sessionService dynamically to avoid circular dependency
             const { sessionService } = await import('./session.service');
@@ -161,8 +161,12 @@ export class WhatsAppService extends EventEmitter {
             // Send to webhook if configured
             if (webhookUrl) {
                 try {
-                    await axios.post(webhookUrl, incomingMessage);
-                    logger.info({ webhookUrl, sessionId: this.sessionId }, 'Message sent to webhook');
+                    await axios.post(webhookUrl, simplifiedPayload);
+                    logger.info({
+                        webhookUrl,
+                        messageType: simplifiedPayload.messageType,
+                        from: simplifiedPayload.from,
+                    }, 'Simplified message sent to webhook');
                 } catch (error) {
                     logger.error({ error, webhookUrl }, 'Failed to send message to webhook');
                 }

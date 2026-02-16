@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { sessionService } from '../services/session.service';
 import { ApiResponse, MessagePayload } from '../types';
+import RedisService from '../services/redis.service';
 
 export const sendMessage = async (req: Request, res: Response) => {
     try {
@@ -82,11 +83,13 @@ export const sendMessage = async (req: Request, res: Response) => {
 
 /**
  * Download media from a WhatsApp message
- * POST body should contain: { sessionId, message } where message is the full message object from webhook
+ * POST body can contain either:
+ * - { sessionId, messageId } - New simplified format (recommended)
+ * - { sessionId, message } - Legacy format with full message object
  */
 export const downloadMedia = async (req: Request, res: Response) => {
     try {
-        const { sessionId, message, returnBase64 } = req.body;
+        const { sessionId, messageId, message, returnBase64 } = req.body;
 
         if (!sessionId) {
             const response: ApiResponse = {
@@ -96,14 +99,7 @@ export const downloadMedia = async (req: Request, res: Response) => {
             return res.status(400).json(response);
         }
 
-        if (!message) {
-            const response: ApiResponse = {
-                success: false,
-                error: 'message object is required',
-            };
-            return res.status(400).json(response);
-        }
-
+        // Get the session
         const session = sessionService.getSession(sessionId);
 
         if (!session) {
@@ -122,7 +118,33 @@ export const downloadMedia = async (req: Request, res: Response) => {
             return res.status(400).json(response);
         }
 
-        const { buffer, mimetype } = await session.downloadMedia(message);
+        // Determine which format is being used
+        let messageObject: any;
+
+        if (messageId) {
+            // New format: look up message from cache
+            messageObject = await RedisService.getCachedMessage(sessionId, messageId);
+
+            if (!messageObject) {
+                const response: ApiResponse = {
+                    success: false,
+                    error: 'Message not found in cache. The message may have expired (cached for 24 hours).',
+                };
+                return res.status(404).json(response);
+            }
+        } else if (message) {
+            // Legacy format: use provided message object
+            messageObject = message;
+        } else {
+            const response: ApiResponse = {
+                success: false,
+                error: 'Either messageId or message object is required',
+            };
+            return res.status(400).json(response);
+        }
+
+        // Download the media
+        const { buffer, mimetype } = await session.downloadMedia(messageObject);
 
         // Return as base64 JSON or binary stream
         if (returnBase64) {

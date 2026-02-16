@@ -68,6 +68,31 @@ class RedisService {
         }
     }
 
+    // Message cache methods (for media download)
+    /**
+     * Store a message in cache for later retrieval (e.g., for media download)
+     * @param sessionId - Session ID
+     * @param messageId - Message ID
+     * @param message - Full Baileys message object
+     * @param ttl - Time to live in seconds (default: 24 hours)
+     */
+    public async cacheMessage(sessionId: string, messageId: string, message: any, ttl: number = 86400): Promise<void> {
+        const key = `message:${sessionId}:${messageId}`;
+        await this.client.setex(key, ttl, JSON.stringify(message));
+    }
+
+    /**
+     * Retrieve a cached message
+     * @param sessionId - Session ID
+     * @param messageId - Message ID
+     * @returns Cached message object or null
+     */
+    public async getCachedMessage(sessionId: string, messageId: string): Promise<any | null> {
+        const key = `message:${sessionId}:${messageId}`;
+        const data = await this.client.get(key);
+        return data ? JSON.parse(data) : null;
+    }
+
     public async disconnect(): Promise<void> {
         await this.client.quit();
     }
