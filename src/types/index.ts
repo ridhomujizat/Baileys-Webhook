@@ -121,7 +121,8 @@ export interface SimplifiedWebhookPayload {
     fromName?: string;
 
     // Message Type
-    messageType: 'text' | 'image' | 'video' | 'audio' | 'document' | 'location' | 'contact' | 'sticker' | 'unknown';
+    messageType: 'text' | 'image' | 'video' | 'audio' | 'document' | 'location' | 'contact' | 'sticker'
+        | 'order' | 'product' | 'unknown';
 
     // Chat Context
     isGroup: boolean;
@@ -146,6 +147,8 @@ export type WebhookMessageContent =
     | MediaContent
     | LocationContent
     | ContactContent
+    | OrderContent
+    | ProductContent
     | UnknownContent;
 
 /**
@@ -195,6 +198,46 @@ export interface ContactContent {
     displayName: string;
     vcard: string;
     phones?: string[];
+}
+
+/**
+ * Order message content (WA Business catalog order)
+ */
+export interface OrderContent {
+    type: 'order';
+    orderId: string;
+    orderTitle?: string;
+    message?: string;
+    itemCount?: number;
+    status?: string;
+    totalAmount?: number;      // in smallest currency unit (e.g. cents × 1000)
+    totalCurrencyCode?: string;
+    sellerJid?: string;
+    token?: string;
+    catalogType?: string;
+}
+
+/**
+ * Product message content (WA Business catalog product share)
+ */
+export interface ProductContent {
+    type: 'product';
+    businessOwnerJid?: string;
+    body?: string;
+    footer?: string;
+    product?: {
+        productId?: string;
+        title?: string;
+        description?: string;
+        currencyCode?: string;
+        priceAmount?: number;   // in smallest currency unit (e.g. cents × 1000)
+        retailerId?: string;
+        url?: string;
+    };
+    catalog?: {
+        title?: string;
+        description?: string;
+    };
 }
 
 /**

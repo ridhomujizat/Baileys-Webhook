@@ -1,5 +1,5 @@
 import { proto, getContentType } from '@whiskeysockets/baileys';
-import { SimplifiedWebhookPayload, WebhookMessageContent } from '../types';
+import { SimplifiedWebhookPayload, WebhookMessageContent, OrderContent, ProductContent } from '../types';
 
 /**
  * Message type mapping from Baileys proto types to simplified types
@@ -15,6 +15,8 @@ const MESSAGE_TYPE_MAP: Record<string, SimplifiedWebhookPayload['messageType']> 
     contactMessage: 'contact',
     contactsArrayMessage: 'contact',
     stickerMessage: 'sticker',
+    orderMessage: 'order',
+    productMessage: 'product',
 };
 
 /**
@@ -88,6 +90,10 @@ export function extractQuotedMessage(message: proto.IMessage): SimplifiedWebhook
         contextInfo = message.contactMessage.contextInfo;
     } else if (message.stickerMessage?.contextInfo) {
         contextInfo = message.stickerMessage.contextInfo;
+    } else if (message.orderMessage?.contextInfo) {
+        contextInfo = message.orderMessage.contextInfo;
+    } else if (message.productMessage?.contextInfo) {
+        contextInfo = message.productMessage.contextInfo;
     }
 
     if (!contextInfo?.stanzaId) {
@@ -258,6 +264,71 @@ export function extractContactContent(message: proto.IMessage): WebhookMessageCo
 }
 
 /**
+ * Extract order content (WA Business catalog order)
+ * @param message - Baileys proto message
+ * @returns OrderContent object
+ */
+export function extractOrderContent(message: proto.IMessage): OrderContent {
+    const order = message.orderMessage;
+    const statusMap: Record<number, string> = {
+        1: 'INQUIRY',
+        2: 'ACCEPTED',
+        3: 'DECLINED',
+        4: 'EXPIRED',
+        5: 'PENDING',
+        6: 'PROCESSING',
+        7: 'SHIPPED',
+        8: 'COMPLETED',
+        9: 'CANCELED',
+    };
+
+    return {
+        type: 'order',
+        orderId: order?.orderId || '',
+        orderTitle: order?.orderTitle || undefined,
+        message: order?.message || undefined,
+        itemCount: order?.itemCount || undefined,
+        status: order?.status != null ? (statusMap[order.status] ?? String(order.status)) : undefined,
+        totalAmount: order?.totalAmount1000 != null ? Number(order.totalAmount1000) : undefined,
+        totalCurrencyCode: order?.totalCurrencyCode || undefined,
+        sellerJid: order?.sellerJid ? cleanPhoneNumber(order.sellerJid) : undefined,
+        token: order?.token || undefined,
+        catalogType: order?.catalogType || undefined,
+    };
+}
+
+/**
+ * Extract product content (WA Business catalog product share)
+ * @param message - Baileys proto message
+ * @returns ProductContent object
+ */
+export function extractProductContent(message: proto.IMessage): ProductContent {
+    const pm = message.productMessage;
+    const snap = pm?.product;
+    const catalog = pm?.catalog;
+
+    return {
+        type: 'product',
+        businessOwnerJid: pm?.businessOwnerJid ? cleanPhoneNumber(pm.businessOwnerJid) : undefined,
+        body: pm?.body || undefined,
+        footer: pm?.footer || undefined,
+        product: snap ? {
+            productId: snap.productId || undefined,
+            title: snap.title || undefined,
+            description: snap.description || undefined,
+            currencyCode: snap.currencyCode || undefined,
+            priceAmount: snap.priceAmount1000 != null ? Number(snap.priceAmount1000) : undefined,
+            retailerId: snap.retailerId || undefined,
+            url: snap.url || undefined,
+        } : undefined,
+        catalog: catalog ? {
+            title: catalog.title || undefined,
+            description: catalog.description || undefined,
+        } : undefined,
+    };
+}
+
+/**
  * Extract phone numbers from vcard string
  * @param vcard - vCard string
  * @returns Array of phone numbers
@@ -333,6 +404,12 @@ export function transformToSimplifiedPayload(
             break;
         case 'contact':
             content = extractContactContent(message);
+            break;
+        case 'order':
+            content = extractOrderContent(message);
+            break;
+        case 'product':
+            content = extractProductContent(message);
             break;
         default:
             content = {
